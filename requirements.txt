@@ -7,3 +7,5 @@ pydantic
 streamlit
 python-dotenv 
 groq
+nltk
+bs4
