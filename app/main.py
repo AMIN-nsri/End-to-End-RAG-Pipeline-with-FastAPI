@@ -4,6 +4,7 @@ from app.schemas import RetrieveRequest, RetrieveResponse, GenerateRequest, Gene
 from app.data_utils import load_documents, clean_text, chunk_text, embed_chunks
 from app.retrieval import build_faiss_index, search_faiss_index, embed_query, hybrid_retrieve
 from app.generation import call_llm_with_context
+from app.config import DATA_DIR, CHUNK_SIZE, OVERLAP, EMBED_MODEL, DEFAULT_LLM_MODEL, DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS, DEFAULT_TOP_P
 import os
 import numpy as np
 from functools import lru_cache
@@ -17,11 +18,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --- Global state for data, embeddings, and index ---
-DATA_DIR = os.getenv('DATA_DIR', './data')
-CHUNK_SIZE = 300
-OVERLAP = 50
-EMBED_MODEL = 'sentence-transformers/all-MiniLM-L6-v2'
-
 all_chunks = []
 embeddings = None
 faiss_index = None
@@ -88,10 +84,10 @@ async def generate_answer(request: GenerateRequest):
     embeddings_np: np.ndarray = embeddings
     loop = asyncio.get_event_loop()
     # Ensure defaults for optional parameters
-    model_name = request.model_name or 'meta-llama/Meta-Llama-3-70B-Instruct-Turbo'
-    temperature = request.temperature if request.temperature is not None else 0.2
-    max_tokens = request.max_tokens if request.max_tokens is not None else 512
-    top_p = request.top_p if request.top_p is not None else 0.95
+    model_name = request.model_name or DEFAULT_LLM_MODEL
+    temperature = request.temperature if request.temperature is not None else DEFAULT_TEMPERATURE
+    max_tokens = request.max_tokens if request.max_tokens is not None else DEFAULT_MAX_TOKENS
+    top_p = request.top_p if request.top_p is not None else DEFAULT_TOP_P
     query_emb = await loop.run_in_executor(executor, cached_embed_query, request.query, EMBED_MODEL)
     try:
         results = await loop.run_in_executor(
